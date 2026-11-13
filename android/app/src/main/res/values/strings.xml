@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Stick the Charge</string>
+    <string name="title_activity_main">Stick the Charge</string>
+    <string name="package_name">com.jswizzle.stickthecharge</string>
+    <string name="custom_url_scheme">com.jswizzle.stickthecharge</string>
+</resources>

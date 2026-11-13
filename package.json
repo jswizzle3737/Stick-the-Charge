@@ -1,0 +1,32 @@
+{
+  "name": "stick-the-charge",
+  "version": "1.0.0",
+  "description": "A Rust and egui application for browsing selected Canadian federal offences, reading plain-language drafts alongside legislative text, saving charges, and taking or storing photos locally in the phone browser.",
+  "private": true,
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "scripts": {
+    "build": "node mobile/scripts/package.mjs",
+    "android:sync": "npm run build && npx cap sync android"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jswizzle3737/Stick-the-Charge.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jswizzle3737/Stick-the-Charge/issues"
+  },
+  "homepage": "https://github.com/jswizzle3737/Stick-the-Charge#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2"
+  }
+}
