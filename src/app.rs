@@ -685,9 +685,9 @@ impl App {
                 name_block(ui, inner_w, charge.name);
                 ui.add_space(6.0);
                 let section = if charge.category == Category::Violent && charge.number == "266" {
-                    "Sections 265 and 266".to_owned()
+                    "Sections 265 and 266 · explanation draft".to_owned()
                 } else {
-                    format!("Section {}", charge.number)
+                    format!("Section {} · explanation draft", charge.number)
                 };
                 paragraph_faint(ui, inner_w, &section);
                 if let Some(message) = &self.save_error {
@@ -696,14 +696,16 @@ impl App {
                 }
 
                 ui.add_space(24.0);
-                reading_heading(ui, rect, "Easy breakdown (draft)");
-                ui.add_space(10.0);
                 if let Some(guide) = charge.guide() {
-                    breakdown_paragraphs(ui, inner_w, guide.introduction);
-                    ui.add_space(12.0);
-                    for point in guide.points {
-                        paragraph(ui, inner_w, &format!("• {point}"));
-                        ui.add_space(12.0);
+                    let mut offset = 0;
+                    if let Some(element) = essential_element(charge) {
+                        numbered_point(ui, inner_w, 1, element);
+                        ui.add_space(16.0);
+                        offset = 1;
+                    }
+                    for (index, point) in guide.points.iter().enumerate() {
+                        numbered_point(ui, inner_w, index + 1 + offset, point);
+                        ui.add_space(16.0);
                     }
                     if !guide.context.is_empty() {
                         breakdown_paragraphs(ui, inner_w, guide.context);
@@ -721,11 +723,15 @@ impl App {
                         paragraph_faint(ui, inner_w, guide.penalty_note);
                     }
                 } else if let Some(draft) = charge.breakdown() {
-                    breakdown_paragraphs(ui, inner_w, draft.overview);
-                    ui.add_space(16.0);
+                    let mut offset = 0;
+                    if let Some(element) = essential_element(charge) {
+                        numbered_point(ui, inner_w, 1, element);
+                        ui.add_space(16.0);
+                        offset = 1;
+                    }
                     for (index, check) in draft.checks.iter().enumerate() {
-                        paragraph(ui, inner_w, &format!("{}. {check}", index + 1));
-                        ui.add_space(12.0);
+                        numbered_point(ui, inner_w, index + 1 + offset, check);
+                        ui.add_space(16.0);
                     }
                     breakdown_paragraphs(ui, inner_w, draft.limits);
                 } else {
@@ -733,9 +739,9 @@ impl App {
                     breakdown_paragraphs(ui, inner_w, &body);
                 }
 
-                ui.add_space(24.0);
-                reading_heading(ui, rect, "The law");
-                ui.add_space(8.0);
+                ui.add_space(28.0);
+                statutory_divider(ui, inner_w);
+                ui.add_space(12.0);
                 ui.horizontal(|ui| {
                     ui.add_space(PAD);
                     ui.add(egui::Hyperlink::from_label_and_url(
@@ -1119,10 +1125,81 @@ fn name_block(ui: &mut Ui, width: f32, text: &str) {
 fn paragraph(ui: &mut Ui, width: f32, text: &str) {
     let gal = ui
         .painter()
-        .layout(text.to_string(), FontId::proportional(14.0), theme::ink_dim(), width);
+        .layout(text.to_string(), FontId::proportional(14.0), theme::ink(), width);
     let h = gal.size().y.max(14.0);
     let (r, _) = ui.allocate_exact_size(vec2(width, h), Sense::hover());
-    ui.painter().galley(pos2(r.left() + PAD, r.top()), gal, theme::ink_dim());
+    ui.painter().galley(pos2(r.left() + PAD, r.top()), gal, theme::ink());
+}
+
+fn numbered_point(ui: &mut Ui, width: f32, number: usize, text: &str) {
+    let inset = 28.0;
+    let gal = ui.painter().layout(text.to_owned(), FontId::proportional(14.0), theme::ink(), (width - inset).max(40.0));
+    let (rect, _) = ui.allocate_exact_size(vec2(width, gal.size().y.max(20.0)), Sense::hover());
+    let x = rect.left() + PAD;
+    ui.painter().text(pos2(x, rect.top()), Align2::LEFT_TOP, format!("{number}."), FontId::proportional(14.0), theme::crimson());
+    ui.painter().galley(pos2(x + inset, rect.top()), gal, theme::ink());
+}
+
+// Elements previously embedded only in an introductory sentence belong in the
+// numbered breakdown; do not lose them when removing the generic introduction.
+fn essential_element(charge: &Charge) -> Option<&'static str> {
+    match (charge.category, charge.number) {
+        (Category::Property, "322") => Some("A person fraudulently takes or converts something to their own or another person's use, without colour of right."),
+        (Category::Drugs, "4(1)") => Some("A person possesses a substance in Schedule I, II or III without authorization under the regulations."),
+        (Category::Drugs, "5(1)") => Some("A person traffics in a substance listed in Schedules I to V, or represents a substance as being listed there."),
+        (Category::Drugs, "5(2)") => Some("A person possesses a substance listed in Schedules I to V for the purpose of trafficking."),
+        (Category::Property, "380") => Some("By deceit, falsehood or other fraudulent means, a person defrauds the public or a person of property, money, valuable security or a service."),
+        (Category::Property, "430") => Some("A person wilfully does one of the following acts involving property:"),
+        (Category::Violent, "264.1") => Some("A person knowingly makes, conveys or causes someone to receive one of the specified threats."),
+        (Category::Weapons, "94") => Some("A motor vehicle occupant knows that a specified firearm, weapon, device or prohibited ammunition is in the vehicle."),
+        (Category::Weapons, "96") => Some("A person possesses a specified firearm, weapon, device or prohibited ammunition knowing it was obtained by an offence."),
+        (Category::Weapons, "98.1") => Some("A person commits robbery intending to steal a firearm, or steals one during the robbery."),
+        (Category::Weapons, "99") => Some("A person makes, transfers or offers to do so with a specified item, knowing they are not authorized."),
+        (Category::Weapons, "100") => Some("A person possesses a specified item for the purpose of transferring it or offering to transfer it, knowing the transfer is unauthorized."),
+        (Category::Weapons, "103") => Some("A person imports or exports a specified item knowing they are not authorized."),
+        (Category::Weapons, "104") => Some("A person imports or exports a specified item without the required authority."),
+        (Category::Weapons, "104.1") => Some("A person alters a cartridge magazine without lawful excuse."),
+        (Category::Weapons, "107") => Some("A person knowingly makes a false report or statement before an officer listed in the section."),
+        (Category::PublicOrder, "83.21") => Some("A person knowingly instructs someone to carry out the specified activity."),
+        (Category::PublicOrder, "83.23(1)") => Some("A person knowingly harbours or conceals someone they know has carried out terrorist activity."),
+        (Category::PublicOrder, "83.23(2)") => Some("A person knowingly harbours or conceals someone they know is likely to carry out terrorist activity."),
+        (Category::PublicOrder, "83.18") => Some("A person knowingly participates in or contributes to an activity of a terrorist group, directly or indirectly."),
+        (Category::PublicOrder, "83.19") => Some("A person knowingly facilitates a terrorist activity."),
+        (Category::PublicOrder, "83.181" | "83.191" | "83.201" | "83.202") => Some("A person leaves or attempts to leave Canada for the specified purpose."),
+        (Category::PublicOrder, "61") => Some("A person speaks seditious words, publishes a seditious libel, or joins a seditious conspiracy."),
+        (Category::PublicOrder, "65") => Some("A person takes part in a riot."),
+        (Category::PublicOrder, "66") => Some("A person is a member of an unlawful assembly."),
+        (Category::PublicOrder, "69") => Some("A peace officer receives notice of a riot within their jurisdiction."),
+        (Category::PublicOrder, "70(3)") => Some("A person contravenes an order made under section 70."),
+        (Category::PublicOrder, "72(1)") => Some("A person enters real property in another person's actual and peaceable possession."),
+        (Category::PublicOrder, "72(2)") => Some("A person detains real property against someone legally entitled to possession."),
+        (Category::PublicOrder, "74") => Some("A person commits an act that is piracy under the law of nations."),
+        (Category::PublicOrder, "76") => Some("A person unlawfully seizes or controls an aircraft by force, threat of force or other intimidation."),
+        (Category::PublicOrder, "78") => Some("A person takes an offensive weapon or explosive substance aboard a civil aircraft."),
+        (Category::PublicOrder, "80") => Some("A person has an explosive substance in their possession, care or control and has the duty of reasonable care described in section 79."),
+        (Category::PublicOrder, "82(2)") => Some("A person makes or possesses an explosive substance, or has it under their care or control, without lawful excuse."),
+        (Category::PublicOrder, "82.4") => Some("A person uses or alters specified nuclear or radioactive material or a device, or commits a specified act affecting a nuclear facility."),
+        (Category::PublicOrder, "82.5") => Some("A person commits an indictable offence under the Criminal Code or another federal Act."),
+        (Category::PublicOrder, "83.02") => Some("A person wilfully provides or collects property, directly or indirectly, without lawful justification or excuse."),
+        (Category::PublicOrder, "52") => Some("A person does a prohibited act intending to endanger Canada's safety, security or defence, or the safety or security of specified foreign forces lawfully in Canada."),
+        (Category::PublicOrder, "52.1") => Some("A person interferes with access to essential infrastructure or causes it to be lost, inoperable, unsafe or unfit for use."),
+        (Category::PublicOrder, "52.2") => Some("A person makes, possesses, sells or distributes a device, including a computer program."),
+        (Category::PublicOrder, "54") => Some("A person aids, assists, harbours or conceals a Canadian Forces deserter or absentee without leave."),
+        (Category::PublicOrder, "127") => Some("A person disobeys a lawful order without lawful excuse."),
+        (Category::PublicOrder, "128") => Some("A peace officer or coroner is entrusted with carrying out a legal process."),
+        (Category::PublicOrder, "134") => Some("A person not specially permitted, authorized or required by law to make a sworn statement makes one."),
+        _ => None,
+    }
+}
+
+fn statutory_divider(ui: &mut Ui, width: f32) {
+    let (rect, _) = ui.allocate_exact_size(vec2(width, 54.0), Sense::hover());
+    let x = rect.left() + PAD;
+    let painter = ui.painter();
+    painter.line_segment([pos2(x, rect.top()), pos2(x + width, rect.top())], Stroke::new(1.0, theme::line()));
+    painter.rect_filled(Rect::from_min_size(pos2(x, rect.top() + 15.0), vec2(3.0, 29.0)), CornerRadius::same(2), theme::crimson());
+    painter.text(pos2(x + 13.0, rect.top() + 13.0), Align2::LEFT_TOP, "Statutory text", FontId::proportional(16.0), theme::ink());
+    painter.text(pos2(x + 13.0, rect.top() + 34.0), Align2::LEFT_TOP, "The wording of the law", FontId::proportional(11.0), theme::ink_faint());
 }
 
 fn breakdown_paragraphs(ui: &mut Ui, width: f32, text: &str) {
@@ -1140,10 +1217,10 @@ fn breakdown_paragraphs(ui: &mut Ui, width: f32, text: &str) {
 fn paragraph_faint(ui: &mut Ui, width: f32, text: &str) {
     let gal = ui
         .painter()
-        .layout(text.to_string(), FontId::proportional(12.0), theme::ink_faint(), width);
+        .layout(text.to_string(), FontId::proportional(12.0), theme::ink_dim(), width);
     let h = gal.size().y.max(12.0);
     let (r, _) = ui.allocate_exact_size(vec2(width, h), Sense::hover());
-    ui.painter().galley(pos2(r.left() + PAD, r.top()), gal, theme::ink_faint());
+    ui.painter().galley(pos2(r.left() + PAD, r.top()), gal, theme::ink_dim());
 }
 
 fn statute_text(ui: &mut Ui, width: f32, act: &str, act_name: &str, section: &str) {
@@ -1152,8 +1229,10 @@ fn statute_text(ui: &mut Ui, width: f32, act: &str, act_name: &str, section: &st
             paragraph_faint(ui, width, &format!("{act_name} · full section {section}\nUnofficial reproduction · current to {}", law.current_to));
             ui.add_space(8.0);
             for line in law.text.lines() {
-                paragraph(ui, width, line);
-                ui.add_space(8.0);
+                let gal = ui.painter().layout(line.to_owned(), FontId::proportional(12.5), theme::ink(), width);
+                let (rect, _) = ui.allocate_exact_size(vec2(width, gal.size().y.max(12.5)), Sense::hover());
+                ui.painter().galley(pos2(rect.left() + PAD, rect.top()), gal, theme::ink());
+                ui.add_space(3.0);
             }
         }
         None => paragraph_faint(ui, width, "The statutory text is unavailable here. Open the official source above."),

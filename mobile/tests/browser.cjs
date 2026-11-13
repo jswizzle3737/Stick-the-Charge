@@ -7,6 +7,15 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 let browser;
 
+// Canvas-rendered egui layout, measured at a 390x844 viewport (canvas 390x786).
+// The app draws a mock phone body, so every point below is in page coordinates.
+const NAV = { home: 82, charges: 195, saved: 308, y: 700 };
+const HOME_PILL = { x: 150, y: 648 };      // home search pill -> opens the charge list
+const SEARCH_FIELD = { x: 195, y: 160 };   // charge-list search field
+const FIRST_ROW = { x: 195, y: 317 };      // first charge row in the list
+const DETAIL_SAVE = { x: 309, y: 110 };    // save button in the detail header
+const CHIP = { x: 113, y: 214 };           // first category chip (Violent)
+
 (async () => {
   browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH, args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true, acceptDownloads: true });
@@ -19,12 +28,23 @@ let browser;
     await page.goto(process.env.TEST_URL || 'http://127.0.0.1:8765/');
     await page.waitForFunction(() => document.querySelector('#loading').textContent === '');
   };
+  // The home screen exposes one search pill; tapping it opens the charge list.
+  const openList = async () => {
+    await page.touchscreen.tap(HOME_PILL.x, HOME_PILL.y);
+    await page.waitForTimeout(300);
+  };
+  const search = async query => {
+    await page.touchscreen.tap(SEARCH_FIELD.x, SEARCH_FIELD.y);
+    await page.keyboard.type(query);
+    await page.waitForTimeout(400);
+  };
 
   await load();
   await page.evaluate(() => navigator.serviceWorker.ready);
   // A category selected after swiping should show its first result, not retain the old offset.
-  const listClip = { x: 45, y: 302, width: 295, height: 345 };
+  await page.touchscreen.tap(NAV.charges, NAV.y);
   await page.waitForTimeout(500);
+  const listClip = { x: 45, y: 300, width: 295, height: 340 };
   const beforeSwipe = await page.screenshot({ clip: listClip });
   const touch = await context.newCDPSession(page);
   await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 170, y: 610 }] });
@@ -33,59 +53,61 @@ let browser;
   await page.waitForTimeout(500);
   const afterSwipe = await page.screenshot({ clip: listClip });
   assert.notEqual(hash(afterSwipe), hash(beforeSwipe), 'swiping the charge list should move its contents');
-  await page.touchscreen.tap(113, 214);
+  await page.touchscreen.tap(CHIP.x, CHIP.y);
   await page.waitForTimeout(600);
   const filteredAfterSwipe = await page.screenshot({ clip: listClip });
   await load();
-  await page.touchscreen.tap(113, 214);
+  await page.touchscreen.tap(NAV.charges, NAV.y);
+  await page.waitForTimeout(500);
+  await page.touchscreen.tap(CHIP.x, CHIP.y);
   await page.waitForTimeout(600);
   const filteredFromTop = await page.screenshot({ clip: listClip });
   assert.equal(hash(filteredAfterSwipe), hash(filteredFromTop), 'selecting a category should return its results to the top');
   await load();
-  await page.touchscreen.tap(150, 165);
-  await page.keyboard.type('344');
-  await page.touchscreen.tap(150, 338);
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(400);
+  await openList();
+  await search('344');
+  await page.touchscreen.tap(FIRST_ROW.x, FIRST_ROW.y);
+  await page.waitForTimeout(300);
   const [definition] = await Promise.all([
     page.waitForEvent('popup', { timeout: 4000 }),
-    page.touchscreen.tap(140, 319),
+    page.touchscreen.tap(120, 350),
   ]);
   await definition.waitForURL('https://laws-lois.justice.gc.ca/eng/acts/C-46/section-344.html');
   await definition.close();
   await load();
   await page.waitForTimeout(400);
   // Open an entry without a long draft and save it through the rendered Rust UI.
-  await page.touchscreen.tap(150, 165);
-  await page.keyboard.type('6(1)');
-  await page.mouse.click(160, 338);
-  await page.waitForTimeout(200);
+  await openList();
+  await search('6(1)');
+  await page.touchscreen.tap(FIRST_ROW.x, FIRST_ROW.y);
+  await page.waitForTimeout(300);
   const [legislation] = await Promise.all([
     page.waitForEvent('popup', { timeout: 4000 }),
-    page.touchscreen.tap(160, 346),
+    page.touchscreen.tap(120, 370),
   ]);
   await legislation.waitForURL('https://laws-lois.justice.gc.ca/eng/acts/C-38.8/section-6.html');
   await legislation.close();
   assert.match(page.url(), /127\.0\.0\.1/, 'opening the statute must leave the app open');
-  await page.mouse.click(309, 113);
+  await page.touchscreen.tap(DETAIL_SAVE.x, DETAIL_SAVE.y);
   await page.waitForFunction(() => localStorage.getItem('stick-the-charge-saved')?.includes('DR:6(1)'));
   await load();
   assert.match(await page.evaluate(() => localStorage.getItem('stick-the-charge-saved')), /DR:6\(1\)/);
-  await page.touchscreen.tap(195, 706);
+  await page.touchscreen.tap(NAV.saved, NAV.y);
   await page.waitForTimeout(400);
-  const savedClip = { x: 45, y: 155, width: 295, height: 160 };
+  const savedClip = { x: 45, y: 170, width: 295, height: 160 };
   const savedAfterReload = await page.screenshot({ clip: savedClip });
-  await page.touchscreen.tap(81, 706);
-  await page.touchscreen.tap(113, 214);
-  await page.touchscreen.tap(140, 165);
-  await page.keyboard.type('assault');
-  await page.touchscreen.tap(195, 706);
+  await page.touchscreen.tap(NAV.charges, NAV.y);
+  await page.waitForTimeout(400);
+  await search('assault');
+  await page.touchscreen.tap(NAV.saved, NAV.y);
   await page.waitForTimeout(400);
   const savedAfterSearch = await page.screenshot({ clip: savedClip });
   assert.equal(hash(savedAfterSearch), hash(savedAfterReload), 'saved charges must stay visible when the main list is filtered');
   async function savedView(id) {
     await page.evaluate(value => localStorage.setItem('stick-the-charge-saved', value), id);
     await load();
-    await page.touchscreen.tap(195, 706);
+    await page.touchscreen.tap(NAV.saved, NAV.y);
     await page.waitForTimeout(300);
     return page.screenshot({ clip: savedClip });
   }
