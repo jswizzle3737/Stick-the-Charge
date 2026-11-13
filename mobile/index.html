@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0c10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Stick the Charge</title>
+</head>
+<body>
+  <div class="shell">
+    <canvas id="screen" aria-label="Stick the Charge charge browser"></canvas>
+    <div class="camera-bar"><button id="open-photos" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h4l2-3h4l2 3h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg> Photos</button></div>
+    <p id="loading" role="status">Opening Stick the Charge…</p>
+  </div>
+  <dialog id="photos">
+    <div class="dialog-head"><div><h1>Photos</h1><p>Kept on this device</p></div><button id="close-photos" type="button" aria-label="Close photos">✕</button></div>
+    <p class="intro">Take a photo or add an image. It stays in this browser until you delete it or clear its data.</p>
+    <button id="open-camera" class="take-photo" type="button">Open camera</button>
+    <div id="camera-controls" class="camera-preview" hidden>
+      <video id="camera-preview" autoplay playsinline muted aria-label="Live camera preview"></video>
+      <button id="capture-photo" class="take-photo" type="button">Take photo</button>
+      <button id="cancel-camera" class="camera-cancel" type="button">Close camera</button>
+    </div>
+    <label class="choose-photo"><span>Use phone camera or choose an image</span><input id="camera" type="file" accept="image/*" capture="environment"></label>
+    <p id="photo-status" role="status" aria-live="polite"></p>
+    <div id="photo-grid" class="photo-grid"></div>
+  </dialog>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

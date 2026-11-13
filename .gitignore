@@ -1,0 +1,8 @@
+/target/
+/mobile/dist/
+**/__pycache__/
+*.pyc
+/mobile/shots-*
+/mobile/current-*.png
+/mobile/new-*.png
+/mobile/test-debug.png

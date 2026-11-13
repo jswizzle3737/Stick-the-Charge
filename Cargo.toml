@@ -1,0 +1,27 @@
+[package]
+name = "stick-the-charge"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+# The library is the WebAssembly build for the phone browser. It must keep this exact name,
+# because mobile/app.mjs imports ./pkg/stick_the_charge.js and wasm-bindgen names the generated
+# glue file after the crate.
+#
+# Keeping that name means the program and the library produce the same .pdb filename, which
+# makes Cargo print an "output filename collision" warning on Windows. The warning is harmless
+# and the build succeeds: the collision is only over a debug-symbol file, never over a binary.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+eframe = { version = "0.31", default-features = false, features = ["default_fonts", "glow"] }
+egui = "0.31"
+image = { version = "0.25", default-features = false, features = ["png"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = ["Document", "Element", "HtmlCanvasElement", "Storage", "Window"] }
+
+[profile.release]
+opt-level = 2
