@@ -744,18 +744,9 @@ impl App {
                     ).open_in_new_tab(true));
                 });
                 ui.add_space(12.0);
-                if let Some(guide) = charge.guide() {
-                    for (index, section) in guide.law_sections.iter().enumerate() {
-                        if index > 0 { ui.add_space(20.0); }
-                        statute_text(ui, inner_w, charge.act_code(), charge.act_name(), section);
-                    }
-                } else {
-                    let section = charge.number.split('(').next().unwrap_or(charge.number);
+                for (index, section) in charge.displayed_law_sections().iter().enumerate() {
+                    if index > 0 { ui.add_space(20.0); }
                     statute_text(ui, inner_w, charge.act_code(), charge.act_name(), section);
-                    if let Some((_, related)) = charge.related_section() {
-                        ui.add_space(20.0);
-                        statute_text(ui, inner_w, charge.act_code(), charge.act_name(), related);
-                    }
                 }
                 ui.add_space(20.0);
             });

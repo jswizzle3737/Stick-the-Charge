@@ -1,14 +1,13 @@
 # Federal offence catalogue status
 
-The app currently includes 118 selected entries, not a complete federal offence
-catalogue. Eighty entries follow the requested explanation, penalty and statutory
-text layout; three other entries have longer explanatory drafts. The remaining
-entries have short illustrative summaries. These explanations have not received legal
+The app currently includes 146 selected entries, not a complete federal offence
+catalogue. Many entries follow the requested explanation, penalty and statutory
+text layout; other entries have shorter illustrative summaries. These explanations have not received legal
 review. Neither a candidate identified below nor the presence of an existing
 entry establishes that all elements, exceptions, or related laws are covered.
 
 The packaged legislation was retrieved from Justice Laws section pages current
-to 2026-10-19. It contains 146 primary and related sections. The text is an
+to 2026-10-19. It contains 170 primary and related sections. The text is an
 unofficial reproduction and normalizes whitespace, so the linked official
 pages remain the source of record. The source date is displayed in the app.
 

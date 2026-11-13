@@ -112,6 +112,28 @@ pub struct ChargeGuide {
 mod additional_guides;
 
 impl Charge {
+    /// The offence and its own punishment, without extra supporting provisions.
+    pub fn displayed_law_sections(&self) -> Vec<&'static str> {
+        let primary = self.number.split('(').next().unwrap_or(self.number);
+        let related = self.related_section().and_then(|(label, section)|
+            matches!(label, "Definition" | "Punishment").then_some(section));
+        let guide = self.guide();
+        let mut sections = Vec::new();
+        if let Some(ref guide) = guide {
+            for &section in guide.law_sections {
+                if (section == primary || section == guide.penalty_section || Some(section) == related)
+                    && !sections.contains(&section) {
+                    sections.push(section);
+                }
+            }
+        }
+        if !sections.contains(&primary) { sections.push(primary); }
+        if let Some(section) = related {
+            if !sections.contains(&section) { sections.push(section); }
+        }
+        sections
+    }
+
     pub fn guide(&self) -> Option<ChargeGuide> {
         match (self.category, self.number) {
             (Category::PublicOrder, "46(1)") => Some(ChargeGuide {
@@ -449,6 +471,16 @@ pub static CHARGES: &[Charge] = &[
     c("434", "Arson — damage to property", Property, Indictable, "14 years", "Intentionally or recklessly damaging property by fire or explosion."),
     c("462.31", "Laundering proceeds of crime", Property, Hybrid, "10 years", "Cleaning money obtained illegally."),
     // --- Weapons -----------------------------------------------------------------
+    c("89", "Carrying a weapon at a public meeting", Weapons, Summary, "Varies", "Carrying a specified item at or on the way to a public meeting without lawful excuse."),
+    c("92(1)", "Possessing a firearm knowing it is unauthorized", Weapons, Indictable, "10 years", "Possessing a firearm knowing of the specified licensing or registration deficiency."),
+    c("92(2)", "Possessing a prohibited weapon or device knowingly", Weapons, Indictable, "10 years", "Possessing a specified weapon, device or ammunition knowing of the licensing deficiency."),
+    c("93", "Possession at an unauthorized place", Weapons, Hybrid, "5 years", "Possessing a specified item at a place not authorized by the licence or law."),
+    c("94", "Unauthorized possession in a motor vehicle", Weapons, Hybrid, "10 years", "Being an occupant of a vehicle knowing a specified item is present in the circumstances described by law."),
+    c("96", "Possession of a weapon obtained by offence", Weapons, Hybrid, "14 years", "Possessing a specified item knowing it was obtained by an offence."),
+    c("98", "Breaking and entering to steal a firearm", Weapons, Indictable, "Life", "Breaking and entering or breaking out in the circumstances described by section 98."),
+    c("98.1", "Robbery to steal a firearm", Weapons, Indictable, "Life", "Committing robbery with intent to steal a firearm or stealing one during the robbery."),
+    c("99", "Weapons trafficking", Weapons, Indictable, "14 years", "Manufacturing or transferring specified items knowing the act is unauthorized."),
+    c("108", "Tampering with a firearm serial number", Weapons, Hybrid, "5 years", "Altering or removing a serial number, or knowingly possessing a firearm with a tampered number, without lawful excuse."),
     c("100", "Possession for weapons trafficking", Weapons, Indictable, "14 years", "Possessing specified items for unauthorized transfer, knowing the transfer is unauthorized."),
     c("101", "Transfer without authority", Weapons, Hybrid, "5 years", "Transferring specified weapons or related items without authorization."),
     c("102", "Making an automatic firearm", Weapons, Hybrid, "10 years", "Making, assembling or altering a firearm for automatic fire without lawful excuse."),
@@ -480,6 +512,24 @@ pub static CHARGES: &[Charge] = &[
     c("320.17", "Flight from a peace officer", Driving, Hybrid, "10 years", "Failing to stop when signalled."),
     c("320.18", "Operation while prohibited", Driving, Hybrid, "10 years", "Driving while disqualified."),
     // --- Public order ------------------------------------------------------------
+    c("83.21", "Instructing activity for a terrorist group", PublicOrder, Indictable, "Life", "Knowingly instructing specified activity for a terrorist group for the purpose stated in the Code."),
+    c("83.22", "Instructing terrorist activity", PublicOrder, Indictable, "Life", "Knowingly instructing a person to carry out a terrorist activity."),
+    c("83.221", "Counselling a terrorism offence", PublicOrder, Indictable, "5 years", "Counselling another person to commit a terrorism offence without identifying a specific offence."),
+    c("83.23(1)", "Concealing a person who carried out terrorist activity", PublicOrder, Indictable, "Varies", "Knowingly harbouring or concealing a person who carried out terrorist activity for the specified purpose."),
+    c("83.23(2)", "Concealing a person likely to carry out terrorist activity", PublicOrder, Indictable, "10 years", "Knowingly harbouring or concealing a person likely to carry out terrorist activity for the specified purpose."),
+    c("83.231", "Hoax involving terrorist activity", PublicOrder, Hybrid, "Varies", "A specified hoax involving a reasonable apprehension of terrorist activity."),
+    c("119", "Bribery of judicial officers and legislators", PublicOrder, Indictable, "14 years", "Corruptly offering or accepting specified benefits involving judicial officers or legislators."),
+    c("120", "Bribery of officers", PublicOrder, Indictable, "14 years", "Corruptly offering or accepting specified benefits involving justice officials."),
+    c("121(1)", "Frauds on the government", PublicOrder, Hybrid, "5 years", "Specified transactions involving government officials, benefits, influence or contracts."),
+    c("121(2)", "Contractor subscribing to an election fund", PublicOrder, Hybrid, "5 years", "Providing specified benefits connected to a government contract to influence an election."),
+    c("121.1", "Unstamped tobacco products", PublicOrder, Hybrid, "5 years", "Specified dealings in tobacco products or raw leaf tobacco contrary to the section."),
+    c("122", "Breach of trust by public officer", PublicOrder, Hybrid, "5 years", "Fraud or breach of trust by an official in connection with their duties."),
+    c("123(1)", "Municipal corruption", PublicOrder, Hybrid, "5 years", "Specified benefits provided or accepted for a municipal official's actions."),
+    c("123(2)", "Influencing a municipal official", PublicOrder, Hybrid, "5 years", "Influencing a municipal official by specified unlawful means."),
+    c("124", "Selling or purchasing office", PublicOrder, Hybrid, "5 years", "Specified purported sales or purchases involving appointment to or resignation from office."),
+    c("125", "Influencing or negotiating appointments", PublicOrder, Hybrid, "5 years", "Specified benefits, negotiations or unauthorized dealings involving public office."),
+    c("141", "Compounding an indictable offence", PublicOrder, Hybrid, "2 years", "Accepting or seeking valuable consideration for agreeing to compound or conceal an indictable offence."),
+    c("142", "Corruptly taking a reward for recovery of goods", PublicOrder, Hybrid, "5 years", "Corruptly accepting valuable consideration for purported help recovering property obtained by an indictable offence."),
     c("126", "Disobeying a federal statute", PublicOrder, Hybrid, "2 years", "Intentionally breaking a federal Act without lawful excuse where no punishment is expressly provided."),
     c("128", "Misconduct by an officer executing process", PublicOrder, Hybrid, "2 years", "Specified intentional misconduct or a false return by a peace officer or coroner entrusted with a process."),
     c("134", "False sworn statement without legal authority", PublicOrder, Summary, "Varies", "Knowingly making a false sworn statement when not specially permitted, authorized or required by law."),
@@ -560,6 +610,23 @@ mod tests {
         let charge = CHARGES.iter().find(|c| c.name == "Possession of property obtained by crime").unwrap();
         assert_eq!(charge.number, "354");
         assert_eq!(charge.statute_url(), "https://laws-lois.justice.gc.ca/eng/acts/C-46/section-354.html");
+    }
+
+    #[test]
+    fn displayed_law_excludes_supporting_provisions_but_keeps_offence_and_penalty() {
+        for (category, number, expected) in [
+            (Category::Property, "322", &["322", "334"][..]),
+            (Category::Violent, "266", &["265", "266"][..]),
+            (Category::PublicOrder, "132", &["131", "132"][..]),
+            (Category::PublicOrder, "46(2)", &["46", "47"][..]),
+            (Category::PublicOrder, "83.12", &["83.12"][..]),
+            (Category::PublicOrder, "72(1)", &["72", "73"][..]),
+            (Category::Drugs, "5(1)", &["5"][..]),
+            (Category::Violent, "344", &["344", "343"][..]),
+        ] {
+            let charge = CHARGES.iter().find(|c| c.category == category && c.number == number).unwrap();
+            assert_eq!(charge.displayed_law_sections(), expected, "{number}");
+        }
     }
 
     #[test]
