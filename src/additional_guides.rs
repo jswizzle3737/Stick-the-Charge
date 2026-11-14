@@ -87,11 +87,23 @@ pub(super) fn lookup(charge: &Charge) -> Option<ChargeGuide> {
             ["Signing as the person taking an oath or declaration when it was not taken, or while knowing one lacks authority to administer it.", "Using or offering a purported affidavit or declaration while knowing it was not properly sworn or declared as described in the section.", "Signing as the person making a purported sworn statement when it was not actually sworn or declared."],
             "",
             "138", ["Up to 2 years on indictment, or summary conviction."], SUMMARY, ["138", "787"]),
-        "811" => guide!(
-            "This offence concerns breaching a recognizance under one of the listed peace-bond provisions.",
-            ["The person is bound by a recognizance under section 83.3 or sections 810 to 810.2.", "The person breaches that recognizance."],
-            "A recognizance is a court-enforceable promise with conditions. Section 811 applies to the listed provisions; it does not describe every breach of a court order.",
-            "811", ["Up to 4 years on indictment, or summary conviction."], SUMMARY, ["811", "787"]),
+        "811" => Some(ChargeGuide {
+            introduction: "Section 811 makes it an offence to breach a recognizance under section 83.3 or sections 810 to 810.2. The Crown must prove beyond a reasonable doubt:",
+            points: &[
+                "The accused was bound by a recognizance under section 83.3 or one of sections 810 to 810.2, and the specific condition was in force when the alleged breach occurred.",
+                "The accused committed an act or omission contrary to that condition. Read the condition as written, including any exception or permission it provides.",
+                "The accused had the required subjective fault, not merely an accidental breach. Examine knowledge or wilful blindness concerning the condition and the facts making the conduct a breach; an honest mistake of fact may raise reasonable doubt.",
+            ],
+            context: "Check the actual recognizance, its terms, effective dates, variations and any discharge. Section 811 is not a general breach-of-court-order offence. In R. v. Jarrar, 2016 ONSC 5898, paras. 18-22, the court applied subjective mens rea to section 811, citing R. v. Legere (1995), 22 O.R. (3d) 89 (C.A.), and considered knowledge, wilful blindness and honest mistake of fact. R. v. Zora, 2020 SCC 14, concerns section 145(3) bail breaches; its precise fault test should not be imported into section 811 without separate analysis.",
+            penalty_section: "811",
+            minimum: "Section 811 sets no mandatory minimum sentence.",
+            penalties: &[
+                "Indictable offence: imprisonment for up to four years (section 811(a)).",
+                "Summary conviction: unless otherwise provided by law, a fine of up to $5,000, imprisonment for up to two years less a day, or both (sections 811(b) and 787(1)).",
+            ],
+            penalty_note: "Section 811 specifies no offence-specific fine. Section 787(1) supplies the default summary-conviction maximum, not a mandatory sentence. Other general sentencing provisions may apply.",
+            law_sections: &["811", "787"],
+        }),
         "810.4" => guide!(
             "This offence concerns misuse of bodily substances or test results provided under certain recognizances.",
             ["Using a bodily substance provided under a listed recognizance for a purpose other than determining compliance with its specified abstinence condition; or", "Using, disclosing or allowing disclosure of its analysis results outside the statutory exceptions."],
