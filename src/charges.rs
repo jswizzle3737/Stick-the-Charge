@@ -686,6 +686,25 @@ mod tests {
     }
 
     #[test]
+    fn section_811_guide_covers_proof_fault_and_penalties() {
+        let charge = CHARGES.iter().find(|c| c.category == Category::PublicOrder && c.number == "811").unwrap();
+        let guide = charge.guide().expect("section 811 guide is available");
+        assert_eq!(guide.penalty_section, "811");
+        assert_eq!(guide.law_sections, &["811", "787"]);
+        assert_eq!(guide.points.len(), 3);
+        assert!(guide.points[0].contains("810 to 810.2"));
+        assert!(guide.points[1].contains("condition"));
+        assert!(guide.points[2].contains("subjective fault"));
+        assert!(guide.points[2].contains("mistake of fact"));
+        assert!(guide.context.contains("2016 ONSC 5898"));
+        assert!(guide.minimum.contains("no mandatory minimum"));
+        assert!(guide.penalties.iter().any(|p| p.contains("four years")));
+        assert!(guide.penalties.iter().any(|p| p.contains("$5,000") && p.contains("two years less a day")));
+        assert!(crate::statutes::lookup(charge.act_code(), "787").is_some());
+        assert_eq!(charge.displayed_law_sections(), vec!["811"]);
+    }
+
+    #[test]
     fn completed_threat_and_impaired_guides_distinguish_penalties() {
         let threats = CHARGES.iter().find(|c| c.category == Category::Violent && c.number == "264.1").unwrap();
         let guide = threats.guide().unwrap();
